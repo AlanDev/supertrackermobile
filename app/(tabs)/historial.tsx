@@ -5,11 +5,16 @@ import {
   Pressable,
   ScrollView,
   KeyboardAvoidingView,
+  AppState,
+  AppStateStatus,
 } from "react-native";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Logo from "../components/Logo";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "expo-router";
+import { useAuth } from "@/context/AuthContext";
+import LoginRequired from "../components/LoginRequired";
 
 interface Compra {
   id: number;
@@ -20,18 +25,53 @@ interface Compra {
 }
 
 const historial = () => {
+  const { isLoggedIn } = useAuth();
   const [compras, setCompras] = useState<Compra[]>([]);
   const [loading, setLoading] = useState(true);
+  const appState = useRef(AppState.currentState);
 
+  // Cargar historial al inicio si el usuario está autenticado
   useEffect(() => {
-    loadPurchases();
-  }, []);
+    if (isLoggedIn) {
+      loadPurchases();
+      
+      // Agregar listener para el estado de la aplicación
+      const subscription = AppState.addEventListener("change", handleAppStateChange);
+      
+      return () => {
+        subscription.remove();
+      };
+    }
+  }, [isLoggedIn]);
+  
+  // También actualizar cuando la pestaña obtiene el foco si el usuario está autenticado
+  useFocusEffect(
+    React.useCallback(() => {
+      if (isLoggedIn) {
+        loadPurchases();
+      }
+      return () => {};
+    }, [isLoggedIn])
+  );
+
+  // Manejar cambios en el estado de la app
+  const handleAppStateChange = (nextAppState: AppStateStatus) => {
+    if (appState.current.match(/inactive|background/) && nextAppState === "active") {
+      // App ha vuelto al primer plano
+      loadPurchases();
+    }
+    appState.current = nextAppState;
+  };
 
   const loadPurchases = async () => {
     try {
+      setLoading(true);
       const savedPurchases = await AsyncStorage.getItem('purchases');
       if (savedPurchases) {
-        setCompras(JSON.parse(savedPurchases));
+        // Ordenar por fecha/ID (más recientes primero)
+        const parsedPurchases: Compra[] = JSON.parse(savedPurchases);
+        parsedPurchases.sort((a, b) => b.id - a.id);
+        setCompras(parsedPurchases);
       }
     } catch (error) {
       console.error('Error loading purchases:', error);
@@ -39,6 +79,11 @@ const historial = () => {
       setLoading(false);
     }
   };
+
+  // Si el usuario no está autenticado, mostrar el componente LoginRequired
+  if (!isLoggedIn) {
+    return <LoginRequired feature="historial de compras" />;
+  }
 
   if (loading) {
     return (
