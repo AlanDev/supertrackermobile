@@ -4,7 +4,7 @@
     "slug": "super-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/image.png",
+    "icon": "./src/app/assets/images/image.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -13,21 +13,21 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-carrito.png",
+        "foregroundImage": "./src/app/assets/images/adaptive-carrito.png",
         "backgroundColor": "#ffffff"
       }
     },
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./src/app/assets/images/image.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash.png",
+          "image": "./src/app/assets/images/splash.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
